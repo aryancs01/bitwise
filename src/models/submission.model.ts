@@ -8,12 +8,25 @@ export enum SubmissionStatus {
   WRONG_ANSWER = "wrong_answer",
 }
 
+export enum TestCaseStatus {
+  AC = "AC",
+  WA = "WA",
+  TLE = "TLE",
+  ERROR = "Error",
+}
+
 export enum SubmissionLanguage {
   CPP = "cpp",
   PYTHON = "python",
 }
 
-export interface ISubmission extends Document {
+export interface SubmissionData {
+  testcaseId: string;
+  status: SubmissionStatus;
+  output: string;
+}
+
+export interface ISubmission {
   problemId: String;
   code: String;
   language: SubmissionLanguage;
@@ -22,6 +35,7 @@ export interface ISubmission extends Document {
   updatedAt: Date;
   userId: String;
   jobId?: String | null;
+  submission: SubmissionData[];
 }
 
 const submissionSchema = new mongoose.Schema<ISubmission>(
@@ -55,6 +69,23 @@ const submissionSchema = new mongoose.Schema<ISubmission>(
       type: String,
       default: null,
     },
+    submission: [
+      {
+        testcaseId: {
+          type: String,
+          required: [true, "Testcase ID is required"],
+        },  
+        status: {
+          type: String,
+          enum: Object.values(SubmissionStatus),
+          required: [true, "Status is required"],
+        },
+        output: {
+          type: String,
+          required: [true, "Output is required"],
+        }
+      }
+    ]
   },
   {
     timestamps: true,

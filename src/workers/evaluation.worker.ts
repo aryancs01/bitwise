@@ -4,8 +4,10 @@ import { env } from "../config/env";
 import { runCode } from "../containers/codeRunner";
 import { LANGUAGE_CONFIG } from "../config/language.config";
 import { Problem } from "../models/problem.model";
+import { Submission } from "../models/submission.model";
 
 export interface TestCase {
+  id: string;
   input: string;
   output: string;
 }
@@ -38,21 +40,37 @@ function matchTestCaseWithResult(
   testCases: TestCase[],
   results: EvaluationResult[],
 ) {
-  const output: string[] = [];
+  const output: { status: string; testcaseId: string; output: string }[] = [];
   if (results.length !== testCases.length) {
     console.log("WA");
     return;
   }
   testCases.map((testCase, index) => {
     if (results[index]?.status === "time_limit_exceeded") {
-      output.push("TLE");
+      output.push({
+        status: "TLE",
+        testcaseId: testCase.id,
+        output: results[index].output
+      });
     } else if (results[index]?.status === "failed") {
-      output.push("Error");
+      output.push({
+        status: "Error",
+        testcaseId: testCase.id,
+        output: results[index].output
+      });
     } else if (results[index]?.status === "success") {
       if (testCase.output.trim() === results[index].output.trim()) {
-        output.push("AC");
+        output.push({
+          status: "AC",
+          testcaseId: testCase.id,
+          output: results[index].output
+        });
       } else {
-        output.push("WA");
+        output.push({
+          status: "WA",
+          testcaseId: testCase.id,
+          output: results[index].output
+        });
       }
     } 
   });
@@ -63,7 +81,7 @@ async function setupEvaluationWorker() {
   const worker = new Worker(
     SUBMISSION_QUEUE,
     async (job: Job) => {
-      console.log(`Processing job ${job.id}`);
+      await Submission.findByIdAndUpdate(job.data.submissionId, { status: "compiling" });
       const data: EvaluationJobData = job.data;
 
       const firstTestCase = data.problem.testcases[1];
@@ -73,6 +91,7 @@ async function setupEvaluationWorker() {
       }
 
       try {
+        await Submission.findByIdAndUpdate(data.submissionId, { status: "running" });
         const testCasesRunner = data.problem.testcases.map((testCase) => {
           return runCode({
             code: data.code,
@@ -90,8 +109,26 @@ async function setupEvaluationWorker() {
         const output = matchTestCaseWithResult(data.problem.testcases, testCasesRunnerPromise);
 
         console.log("Final output:", output);
+
+        if(!output) {
+          console.log("Error in matching test cases with results");
+          return;
+        }
+
+        if (output.some((o) => o.status === "TLE") || output.some((o) => o.status === "Error") || output.some((o) => o.status === "WA")) {
+          await Submission.findByIdAndUpdate(data.submissionId, { status: "wrong_answer" });
+        } else {
+          await Submission.findByIdAndUpdate(data.submissionId, { status: "accepted" });
+          console.log("All test cases passed successfully");
+        }
+
+        await Submission.findByIdAndUpdate(data.submissionId, {
+          submission: output
+        })
+
       } catch (err) {
         console.error("Error during code execution:", err);
+        await Submission.findByIdAndUpdate(data.submissionId, { status: "wrong_answer" });
       }
     },
     {
