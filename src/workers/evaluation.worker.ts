@@ -84,12 +84,6 @@ async function setupEvaluationWorker() {
       await Submission.findByIdAndUpdate(job.data.submissionId, { status: "compiling" });
       const data: EvaluationJobData = job.data;
 
-      const firstTestCase = data.problem.testcases[1];
-
-      if (!firstTestCase) {
-        throw new Error("No test cases found");
-      }
-
       try {
         await Submission.findByIdAndUpdate(data.submissionId, { status: "running" });
         const testCasesRunner = data.problem.testcases.map((testCase) => {

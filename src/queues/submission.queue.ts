@@ -1,4 +1,4 @@
-import { Queue, QueueEvents } from "bullmq";
+import { Queue } from "bullmq";
 import { env } from "../config/env";
 import { SUBMISSION_QUEUE } from "../utils/constants";
 

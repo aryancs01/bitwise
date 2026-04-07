@@ -47,7 +47,7 @@ export const createSubmission = async (req: Request, res: Response) => {
       submission,
     );
   } catch (error) {
-    return sendResponse(res, 400, false, (error as Error).message);
+    return sendResponse(res, 500, false, "Internal Server Error");
   }
 };
 
