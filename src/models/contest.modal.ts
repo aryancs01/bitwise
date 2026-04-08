@@ -32,7 +32,8 @@ const problemInContestSchema = new Schema<IProblemInContest>({
   },
   order: {
     type: Number,
-    required: true,
+    required: false,
+    default: 0,
   },
 });
 

@@ -1,13 +1,10 @@
 import { WebSocketServer, WebSocket } from "ws";
-import http from "http";
-import app from "../app";
-
-const server = http.createServer(app);
+import http from "http";  
 
 let ws: WebSocketServer | null = null;
 
-export function connectWebSocket() {
-  ws = new WebSocketServer({ server });
+export function connectWebSocket(serverInstance: http.Server) {
+  ws = new WebSocketServer({ server:serverInstance });
 
   ws.on("connection", (socket) => {
     console.log("Connected to WebSocket server");

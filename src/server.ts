@@ -1,4 +1,5 @@
 import app from "./app";
+import server from "http";
 import { connectDB } from "./config/db";
 import { env } from "./config/env";
 import { redisClient } from "./config/redis.config";
@@ -6,9 +7,10 @@ import { connectWebSocket } from "./config/socket";
 import { pullAllImages } from "./containers/pullImage";
 import { startContestWorker } from "./workers/contest.worker";
 import { startWorker } from "./workers/evaluation.worker";
+const serverInstance = server.createServer(app);
 
-app.listen(env.PORT, async ()=>{
-    connectWebSocket()
+serverInstance.listen(env.PORT, async ()=>{
+    connectWebSocket(serverInstance);
     await connectDB()
     await redisClient.ping();
     await startWorker();

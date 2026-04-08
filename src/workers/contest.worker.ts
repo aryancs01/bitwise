@@ -90,27 +90,28 @@ async function updateContestSubmission(
 
     await contextParticipant.save();
 
-    const acceptedCount = contextParticipant.submissions.filter(
-        (submission) => submission.status === SubmissionStatus.ACCEPTED,
-    ).length;
-    const totalProblems = contextParticipant.submissions.length;
-    const elapsedTime = Date.now() - new Date(contextParticipant.createdAt).getTime();
+    if(status === SubmissionStatus.ACCEPTED || status === SubmissionStatus.WRONG_ANSWER) {
+        const acceptedCount = contextParticipant.submissions.filter(
+            (submission) => submission.status === SubmissionStatus.ACCEPTED,
+        ).length;
+        const totalProblems = contextParticipant.submissions.length;
+        const elapsedTime = Date.now() - new Date(contextParticipant.createdAt).getTime();
 
-    const leaderboardData = await createRedisSortedSet(
-        contextParticipant.contestId.toString(),
-        contextParticipant.userId.toString(),
-        acceptedCount,
-        elapsedTime,
-    );
+        const leaderboardData = await createRedisSortedSet(
+            contextParticipant.contestId.toString(),
+            contextParticipant.userId.toString(),
+            acceptedCount,
+            elapsedTime,
+        );
 
-    console.log("Contest leaderboard update:", {
-        contestId: contextParticipant.contestId.toString(),
-        userId: contextParticipant.userId.toString(),
-        acceptedCount,
-        totalProblems,
-        ...leaderboardData,
-    });
-
+        console.log("Contest leaderboard update:", {
+            contestId: contextParticipant.contestId.toString(),
+            userId: contextParticipant.userId.toString(),
+            acceptedCount,
+            totalProblems,
+            ...leaderboardData,
+        });
+    }
     
     return true;
 }

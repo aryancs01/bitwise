@@ -11,6 +11,14 @@ export const createContest = async (req: Request, res: Response) => {
     const { name, description, startTime, endTime, problems, status } =
       req.body;
 
+    const checkProblems = await Problem.find({
+      _id: { $in: problems.map((p: any) => p.problemId) },
+    });
+
+    if (checkProblems.length !== problems.length) {
+      return sendResponse(res, 400, false, "One or more problems not found");
+    }
+
     const contest = await Contest.create({
       name,
       description,
